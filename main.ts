@@ -13,8 +13,12 @@ function checkLength(s: string): void {
   if (n > 200) throw new Error(`entry too long: ${n} characters, max 200`);
 }
 
-function checkShape(s: string): void {
+function checkBlank(s: string): void {
   if (s.trim() === "") throw new Error("entry is blank: only whitespace found");
+}
+
+function checkShape(s: string): void {
+  checkBlank(s);
   if (/[\r\n]/.test(s)) throw new Error("entry must fit on one line");
 }
 
