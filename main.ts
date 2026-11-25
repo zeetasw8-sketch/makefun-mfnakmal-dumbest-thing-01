@@ -1,25 +1,26 @@
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+// Dumbest-thing entry: the one-liner lives in line.txt. This script reads it,
+// gives it a quick once-over, then drops it into the scorer's entry file.
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-const dir = dirname(fileURLToPath(import.meta.url));
-const raw = readFileSync(join(dir, "line.txt"), "utf8");
-const line = raw.endsWith("\n") ? raw.slice(0, -1) : raw;
+const here = decodeURIComponent(new URL(".", import.meta.url).pathname);
+const source = path.join(here, "line.txt");
+const text = fs.readFileSync(source, "utf8").replace(/\n$/, "");
 
-function validateLine(text: string): void {
-  if (text.length < 1 || text.length > 200) {
-    throw new Error(`line.txt must be 1-200 characters, got ${text.length}`);
-  }
-  if (text.trim().length === 0) {
-    throw new Error("line.txt must not be only whitespace");
-  }
-  if (text.includes("\n") || text.includes("\r")) {
-    throw new Error("line.txt must be a single line");
-  }
+function checkLength(s: string): void {
+  const n = s.length;
+  if (n === 0) throw new Error("empty entry: line.txt has no characters");
+  if (n > 200) throw new Error(`entry too long: ${n} characters, max 200`);
 }
 
-validateLine(line);
+function checkShape(s: string): void {
+  if (s.trim() === "") throw new Error("entry is blank: only whitespace found");
+  if (/[\r\n]/.test(s)) throw new Error("entry must fit on one line");
+}
 
-const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
-mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, "entry.txt"), line, "utf8");
+checkLength(text);
+checkShape(text);
+
+const destination = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+fs.mkdirSync(destination, { recursive: true });
+fs.writeFileSync(path.join(destination, "entry.txt"), text, "utf8");
